@@ -1,0 +1,16 @@
+# Entorno virtual
+venv/
+.env
+
+# Bytecode y cache de Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Datos y persistencia local
+data/*.db
+data/*.sqlite3
+
+# IDEs y editores
+.vscode/
+.idea/
