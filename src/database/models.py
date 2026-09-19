@@ -1,5 +1,5 @@
 import enum
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import (
     Column,
     Integer,
@@ -40,14 +40,13 @@ class Contratista(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     documento = Column(String(30), unique=True, nullable=False, index=True)
     nombre = Column(String(120), nullable=False)
-    rol = Column(String(80), nullable=False)  # ej: Gestor de Convivencia, Líder Operativo
+    rol = Column(String(80), nullable=False)
     estado = Column(
         SQLEnum(EstadoContratista),
         default=EstadoContratista.DISPONIBLE,
         nullable=False,
     )
 
-    # Relaciones
     asignaciones = relationship("Asignacion", back_populates="contratista")
 
     def __repr__(self):
@@ -59,7 +58,7 @@ class PuntoOperacion(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     nombre = Column(String(120), nullable=False, unique=True)
-    sector = Column(String(100), nullable=False)  # ej: Polígono Central, Estación X
+    sector = Column(String(100), nullable=False)
     criticidad = Column(
         SQLEnum(NivelCriticidad),
         default=NivelCriticidad.MEDIA,
@@ -67,7 +66,6 @@ class PuntoOperacion(Base):
     )
     requerimiento_minimo = Column(Integer, default=1, nullable=False)
 
-    # Relaciones
     asignaciones = relationship("Asignacion", back_populates="punto")
 
     def __repr__(self):
@@ -82,16 +80,15 @@ class Asignacion(Base):
     punto_id = Column(Integer, ForeignKey("puntos_operacion.id"), nullable=True, index=True)
     inicio = Column(DateTime, nullable=False)
     fin = Column(DateTime, nullable=False)
-    es_buffer_movil = Column(Boolean, default=False, nullable=False)  # True si forma parte del 10%-15% móvil
+    es_buffer_movil = Column(Boolean, default=False, nullable=False)
     activa = Column(Boolean, default=True, nullable=False)
 
-    # Relaciones
     contratista = relationship("Contratista", back_populates="asignaciones")
     punto = relationship("PuntoOperacion", back_populates="asignaciones")
     novedades = relationship("Novedad", back_populates="asignacion")
 
     def __repr__(self):
-        return f"<Asignacion(id={self.id}, contratista_id={self.contratista_id}, punto_id={self.punto_id}, buffer={self.es_buffer_movil})>"
+        return f"<Asignacion(id={self.id}, contratista_id={self.contratista_id}, buffer={self.es_buffer_movil})>"
 
 
 class Novedad(Base):
@@ -100,11 +97,10 @@ class Novedad(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     asignacion_id = Column(Integer, ForeignKey("asignaciones.id"), nullable=False, index=True)
     tipo = Column(SQLEnum(TipoNovedad), nullable=False)
-    reemplazo_id = Column(Integer, ForeignKey("contratistas.id"), nullable=True)  # Contratista del buffer asignado
+    reemplazo_id = Column(Integer, ForeignKey("contratistas.id"), nullable=True)
     detalle = Column(Text, nullable=True)
-    registrado_el = Column(DateTime, default=datetime.utcnow, nullable=False)
+    registrado_el = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
-    # Relaciones
     asignacion = relationship("Asignacion", back_populates="novedades")
     reemplazo = relationship("Contratista", foreign_keys=[reemplazo_id])
 
